@@ -8,9 +8,13 @@ First of all, I decided to build a Authentication. So, I planned how to do it an
 
 **Features**:
 
-The person can edit their profile details whenever they need after the successful authentication. User can able to tweet in their dashboard and they can also tweet using the hash-tags. Users can able to see whom they are following and who are their followers.
-
-The home page consists of Six button. The users can able to delete their tweets there and can able to search tweets based on the hash-tags and they can see the tweets[whom they follow] in the feed. The user can also post what is happening in their surrounding.
+* The person can edit their profile details whenever they need after the successful authentication. 
+* User can able to tweet in their dashboard and they can also tweet using the hash-tags. 
+* Users can able to see whom they are following and who are their followers.
+* The home page consists of Six button. The users can able to delete their tweets there 
+* User can able to search tweets based on the hash-tags 
+* They can see the tweets[whom they follow] in the feed. 
+* The user can also post what is happening in their surrounding.
 
 **Future Scopes:**
 
