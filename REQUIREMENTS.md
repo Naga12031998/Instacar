@@ -1,3 +1,13 @@
+**Note:** Kindly add *node modules* to run this application
+
+**Steps to add node module:**
+
+```
+$ npx create-react-app <filename>
+```
+
+Copy the node modules folder from file you just created and paste in the *frontend* folder
+
 ## BACK-END REQUIREMENTS
 
 ### Pip installation:
