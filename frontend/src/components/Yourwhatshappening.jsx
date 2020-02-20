@@ -25,6 +25,9 @@ class Yourwhatshappening extends React.Component {
 	};
 
 	fetchData = () => {
+		this.setState({
+			status : false
+		})
 		Axios.get(`http://127.0.0.1:5000/getuser`, {
 			headers: {
 				Authorization: 'Bearer ' + token,
@@ -48,9 +51,6 @@ class Yourwhatshappening extends React.Component {
 				'Content-type': 'application/json'
 			}
 		}).then(
-			(res) => {
-				// console.log(res.data)
-			},
 			setTimeout(() => {
 				this.fetchData();
 			}, 200)

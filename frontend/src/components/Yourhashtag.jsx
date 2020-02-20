@@ -24,6 +24,9 @@ class Yourhashtag extends React.Component {
 	};
 
 	fetchData = () => {
+		this.setState({
+			status : false
+		})
 		Axios.get(`http://127.0.0.1:5000/getuser`, {
 			headers: {
 				Authorization: 'Bearer ' + token,
@@ -33,6 +36,7 @@ class Yourhashtag extends React.Component {
 			// console.log(res.data[0].hashTagTweets)
 			if (res.data[0].hashTagTweets.length) {
 				this.setState({
+					status: true,
 					userArray: res.data[0].hashTagTweets
 				});
 			}
@@ -46,9 +50,6 @@ class Yourhashtag extends React.Component {
 				'Content-type': 'application/json'
 			}
 		}).then(
-			(res) => {
-				// console.log(res.data)
-			},
 			setTimeout(() => {
 				this.fetchData();
 			}, 200)
