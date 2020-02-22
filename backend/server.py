@@ -6,15 +6,9 @@ from bson.objectid import ObjectId
 
 import json, hashlib, jwt, datetime, uuid
 
-# client = MongoClient("mongodb+srv://Naga12031998:hurricane13@instacardb-qlyyy.mongodb.net/test?retryWrites=true&w=majority")
-# db = client.get_database('instaCar')
-# users = db.users
-# hashTags = db.hashTags
-
 app = Flask(__name__)
 CORS(app)
-app.config["MONGO_URI"] = "mongodb+srv://Naga12031998:hurricane13@instacardb-qlyyy.mongodb.net/test?retryWrites=true&w=majority"
-# app.config["MONGO_URI"] = "mongodb://localhost:27017/instaCar"
+app.config["MONGO_URI"] = "mongodb://localhost:27017/instaCar"
 mongo = PyMongo(app)
 
 # SIGN UP
