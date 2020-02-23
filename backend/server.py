@@ -3,13 +3,16 @@ from flask_cors import CORS
 from flask_pymongo import PyMongo
 from bson.json_util import dumps
 from bson.objectid import ObjectId
+from pymongo import MongoClient
 
 import json, hashlib, jwt, datetime, uuid
 
 app = Flask(__name__)
 CORS(app)
-app.config["MONGO_URI"] = "mongodb://localhost:27017/instaCar"
-mongo = PyMongo(app)
+cluster = MongoClient('mongodb+srv://Naga12031998:hurricane13@instacardb-qlyyy.mongodb.net/test?retryWrites=true&w=majority')
+db = cluster['instaCar']
+users = db['users']
+hashTags = db['hashTags']
 
 # SIGN UP
 @app.route('/auth/signup', methods = ['POST'])
@@ -20,10 +23,10 @@ def register():
     passwordHash = request.json['password']
     passwordHash = md5_hash(passwordHash)
 
-    checkUser = mongo.db.users.find({'email' : email, 'userName' : userName}).count()
+    checkUser = users.find({'email' : email, 'userName' : userName}).count()
 
     if checkUser == 0:
-        mongo.db.users.insert_one({'userName' : userName, 'email' : email, 'passwordHash' : passwordHash, 'name' : name, 'picture' : '', 'coverPicture' : '', 'bio' : '', 'location' : '', 'webSite' : '', 'birthDate' : '', 'followers' : [], 'following' : [], 'tweets' : [], 'whatsHappening' : [], 'hashTagTweets' : []})
+        users.insert_one({'userName' : userName, 'email' : email, 'passwordHash' : passwordHash, 'name' : name, 'picture' : '', 'coverPicture' : '', 'bio' : '', 'location' : '', 'webSite' : '', 'birthDate' : '', 'followers' : [], 'following' : [], 'tweets' : [], 'whatsHappening' : [], 'hashTagTweets' : []})
         return {"status": 'User created successfully'}
     else:
         return {"status" : 'email already taken' }
@@ -35,7 +38,7 @@ def signin():
     password = request.json['password']
     check = md5_hash(password)
 
-    checkUser = mongo.db.users.find({"email" : email, "passwordHash" : check}).count()
+    checkUser = users.find({"email" : email, "passwordHash" : check}).count()
 
     if checkUser == 0:
         return {"status" : 401}
@@ -62,7 +65,7 @@ def updateProfilepicture():
     image.save(location)
     imgLocation = location
 
-    mongo.db.users.update({"email": decoded_data['email']}, {"$set": {'picture' : location}})
+    users.update({"email": decoded_data['email']}, {"$set": {'picture' : location}})
     return {"Status": 200 }
 
 # UPDATE USER DETAILS
@@ -77,7 +80,7 @@ def updateUserDetails():
     webSite = request.json['webSite']
     birthDate = request.json['birthDate']
 
-    mongo.db.users.update({"email": decoded_data['email']}, {"$set": {'bio' : bio, 'location' : location, 'birthDate' : birthDate, 'webSite' : webSite}})
+    users.update({"email": decoded_data['email']}, {"$set": {'bio' : bio, 'location' : location, 'birthDate' : birthDate, 'webSite' : webSite}})
     return {'status' : 200}
 
 # TWEET
@@ -86,7 +89,7 @@ def tweet():
     auth_header = request.headers.get('Authorization')
     token_encoded = auth_header.split(' ')[1]
     decoded_data = jwt.decode(token_encoded, 'naga', algorithm='HS256')
-    getUserName = mongo.db.users.find({'email' : decoded_data['email']})
+    getUserName = users.find({'email' : decoded_data['email']})
 
     x = datetime.datetime.now()
     day = int(x.strftime('%d'))
@@ -101,7 +104,7 @@ def tweet():
     image.save(location)
     imgLocation = location
 
-    mongo.db.users.update({'email' : decoded_data['email']}, {'$push' :{'tweets' : {'tweetId' : tweetId, 'tweet' : tweet, 'picture' : imgLocation, 'day' : day, 'month' : month, 'year' : year, 'postedBy' : getUserName[0]['name']}}})
+    users.update({'email' : decoded_data['email']}, {'$push' :{'tweets' : {'tweetId' : tweetId, 'tweet' : tweet, 'picture' : imgLocation, 'day' : day, 'month' : month, 'year' : year, 'postedBy' : getUserName[0]['name']}}})
     return {'status' : 200}
 
 # WHATS HAPPENING
@@ -120,7 +123,7 @@ def whatsHappening():
     whatId = id.hex
     what = request.json['what']
 
-    mongo.db.users.update({'email' : decoded_data['email']}, {'$push' :{'whatsHappening' : {'whatId' : whatId,'what' : what, 'day' : day, 'month' : month, 'year' : year}}})
+    users.update({'email' : decoded_data['email']}, {'$push' :{'whatsHappening' : {'whatId' : whatId,'what' : what, 'day' : day, 'month' : month, 'year' : year}}})
     return {'status' : 200}
 
 # HASH TAG TWEETS
@@ -130,7 +133,7 @@ def hashTagTweets():
     token_encoded = auth_header.split(' ')[1]
     decoded_data = jwt.decode(token_encoded, 'naga', algorithm='HS256')
 
-    getUserName = mongo.db.users.find({'email' : decoded_data['email']})
+    getUserName = users.find({'email' : decoded_data['email']})
 
     x = datetime.datetime.now()
     day = int(x.strftime('%d'))
@@ -146,14 +149,14 @@ def hashTagTweets():
     image.save(location)
     imgLocation = location
 
-    mongo.db.users.update({'email' : decoded_data['email']}, {'$push' : {'hashTagTweets' : {'hashTag' : hashTag, 'tweetId' : tweetId, 'tweet' : tweet,'picture' : imgLocation, 'day' : day, 'month' : month, 'year' : year}}})
+    users.update({'email' : decoded_data['email']}, {'$push' : {'hashTagTweets' : {'hashTag' : hashTag, 'tweetId' : tweetId, 'tweet' : tweet,'picture' : imgLocation, 'day' : day, 'month' : month, 'year' : year}}})
 
-    getHashTag = mongo.db.hashTags.find({'hashTag' : hashTag}).count()
+    getHashTag = hashTags.find({'hashTag' : hashTag}).count()
 
     if getHashTag == 0:
-        mongo.db.hashTags.insert_one({'hashTag' : hashTag, 'hashTagTweets' : [{ 'tweetId' : tweetId,'tweet' : tweet, 'name' : getUserName[0]['name'], 'picture' : imgLocation, 'day' : day, 'month' : month, 'year' : year}]})
+        hashTags.insert_one({'hashTag' : hashTag, 'hashTagTweets' : [{ 'tweetId' : tweetId,'tweet' : tweet, 'name' : getUserName[0]['name'], 'picture' : imgLocation, 'day' : day, 'month' : month, 'year' : year}]})
     else:
-        mongo.db.hashTags.update({'hashTag': hashTag}, {'$push' : {'hashTagTweets' : {'tweetId' : tweetId, 'tweet' : tweet, 'name' : getUserName[0]['name'], 'picture' : imgLocation, 'day' : day, 'month' : month, 'year' : year}}})
+        hashTags.update({'hashTag': hashTag}, {'$push' : {'hashTagTweets' : {'tweetId' : tweetId, 'tweet' : tweet, 'name' : getUserName[0]['name'], 'picture' : imgLocation, 'day' : day, 'month' : month, 'year' : year}}})
 
     return {'status' : 200}
 
@@ -164,7 +167,7 @@ def deleteTweets(_id):
     token_encoded = auth_header.split(' ')[1]
     decoded_data = jwt.decode(token_encoded, 'naga', algorithm='HS256')
 
-    mongo.db.users.update({'email' : decoded_data['email']}, { '$pull': {'tweets': {'tweetId' : _id} }})
+    users.update({'email' : decoded_data['email']}, { '$pull': {'tweets': {'tweetId' : _id} }})
     return {'status' : 200}
 
 # DELETE WHATSHAPPENING
@@ -174,7 +177,7 @@ def deleteWhatsHappening(_id):
     token_encoded = auth_header.split(' ')[1]
     decoded_data = jwt.decode(token_encoded, 'naga', algorithm='HS256')
 
-    mongo.db.users.update({'email' : decoded_data['email']}, { '$pull': {'whatsHappening': {'whatId' : _id} }})
+    users.update({'email' : decoded_data['email']}, { '$pull': {'whatsHappening': {'whatId' : _id} }})
     return {'status' : 200}
 
 # DELETE HASHTAGTWEETS
@@ -184,8 +187,8 @@ def deleteHashTagTweets(_id):
     token_encoded = auth_header.split(' ')[1]
     decoded_data = jwt.decode(token_encoded, 'naga', algorithm='HS256')
 
-    mongo.db.users.update({'email' : decoded_data['email']}, { '$pull': {'hashTagTweets': {'tweetId' : _id} }})
-    mongo.db.hashTags.update({ }, { '$pull': {'hashTagTweets': {'tweetId' : _id} }})
+    users.update({'email' : decoded_data['email']}, { '$pull': {'hashTagTweets': {'tweetId' : _id} }})
+    hashTags.update({ }, { '$pull': {'hashTagTweets': {'tweetId' : _id} }})
     return {'status' : 200}
 
 # GET LOGGED IN USER
@@ -195,7 +198,7 @@ def getUser():
     token_encoded = auth_header.split(' ')[1]
     decoded_data = jwt.decode(token_encoded, 'naga', algorithm='HS256')
 
-    user = mongo.db.users.find({'email' : decoded_data['email']})
+    user = users.find({'email' : decoded_data['email']})
 
     return dumps(user)
 
@@ -207,8 +210,8 @@ def getAllusersELAF():
     decoded_data = jwt.decode(token_encoded, 'naga', algorithm='HS256')
 
     arr = []
-    getLoggedInUser = mongo.db.users.find({'email' : decoded_data['email']})
-    getAllusers = mongo.db.users.find()
+    getLoggedInUser = users.find({'email' : decoded_data['email']})
+    getAllusers = users.find()
     array = getLoggedInUser[0]['following']
     for i in getAllusers:
         if i['name'] not in array and i['name'] != getLoggedInUser[0]['name']:
@@ -223,10 +226,10 @@ def followUsers(name):
     token_encoded = auth_header.split(' ')[1]
     decoded_data = jwt.decode(token_encoded, 'naga', algorithm='HS256')
 
-    getUserData = mongo.db.users.find({'email' : decoded_data['email']}) 
+    getUserData = users.find({'email' : decoded_data['email']}) 
 
-    mongo.db.users.update({'email' : decoded_data['email']}, {'$push' : {'following' : name}})
-    mongo.db.users.update({'name' : name}, {'$push' : {'followers' : getUserData[0]['name']}})
+    users.update({'email' : decoded_data['email']}, {'$push' : {'following' : name}})
+    users.update({'name' : name}, {'$push' : {'followers' : getUserData[0]['name']}})
     return {'status' : 200}
 
 # GET ALL FOLLOWING USER[EXPECT LOGGED IN USER]:
@@ -237,7 +240,7 @@ def getAllusersFEL():
     decoded_data = jwt.decode(token_encoded, 'naga', algorithm='HS256')
 
     arr = []
-    getLoggedInUser = mongo.db.users.find({'email' : decoded_data['email']})
+    getLoggedInUser = users.find({'email' : decoded_data['email']})
     for j in getLoggedInUser[0]['following']:
         arr.append(j)
             
@@ -251,7 +254,7 @@ def getAllFollowers():
     decoded_data = jwt.decode(token_encoded, 'naga', algorithm='HS256')
 
     arr = []
-    getLoggedInUser = mongo.db.users.find({'email' : decoded_data['email']})
+    getLoggedInUser = users.find({'email' : decoded_data['email']})
     for j in getLoggedInUser[0]['followers']:
         arr.append(j)
             
@@ -264,22 +267,22 @@ def unfollowUsers(name):
     token_encoded = auth_header.split(' ')[1]
     decoded_data = jwt.decode(token_encoded, 'naga', algorithm='HS256')
 
-    getUserData = mongo.db.users.find({'email' : decoded_data['email']}) 
+    getUserData = users.find({'email' : decoded_data['email']}) 
 
-    mongo.db.users.update({'email' : decoded_data['email']}, {'$pull' : {'following' : name}})
-    mongo.db.users.update({'name' : name}, {'$pull' : {'followers' : getUserData[0]['name']}})
+    users.update({'email' : decoded_data['email']}, {'$pull' : {'following' : name}})
+    users.update({'name' : name}, {'$pull' : {'followers' : getUserData[0]['name']}})
     return {'status' : 200}
 
 # GET ALL HASHTAGS
 @app.route('/getallhastags')
 def getAllHashtags():
-    getAll= mongo.db.hashTags.find()
+    getAll= hashTags.find()
     return dumps(getAll)
 
 # SEARCH HASTAG TWEETS
 @app.route('/searchhashtag/<hashtag>')
 def seatchHashTag(hashtag):
-    getData = mongo.db.hashTags.find({'hashTag' : hashtag})
+    getData = hashTags.find({'hashTag' : hashtag})
     return dumps(getData)
 
 # GET ALL TWEETS OF FOLLOWING USER
@@ -289,10 +292,10 @@ def getDataOfFollowingUser():
     token_encoded = auth_header.split(' ')[1]
     decoded_data = jwt.decode(token_encoded, 'naga', algorithm='HS256')
 
-    getUserData = mongo.db.users.find({'email' : decoded_data['email']})
+    getUserData = users.find({'email' : decoded_data['email']})
     array = getUserData[0]['following'] 
     getTweets = []
-    getAllusers = mongo.db.users.find()
+    getAllusers = users.find()
 
     for i in getAllusers:
         if i['name'] in array:
