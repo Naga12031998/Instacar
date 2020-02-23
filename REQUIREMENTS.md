@@ -37,7 +37,7 @@ $ python -m pip install pymongo
 ### Jwt Installation:
 
 ```
-$ pip install jwt
+$ pip install pyjwt or pip install jwt
 ```
 
 ### Flask-CORS Installation:
